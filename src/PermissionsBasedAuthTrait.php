@@ -27,12 +27,17 @@ trait PermissionsBasedAuthTrait
 	 * @return bool
 	 */
 	public function authorizeToViewAny(Request $request)
-	{
-		if (!static::authorizable()) {
-			return;
-		}
-		return $this->authorizeTo($request, 'viewAny');
-	}
+    {
+        if (! static::authorizable()) {
+            return;
+        }
+
+        $gate = static::authorizationGate();
+
+        if (\is_callable([$gate, 'viewAny'])) {
+            $this->authorizeTo($request, 'viewAny');
+        }
+    }
 
 	/**
 	 * Determine if the resource should be available for the given request.
@@ -159,7 +164,7 @@ trait PermissionsBasedAuthTrait
 	 *
 	 * @throws \Illuminate\Auth\Access\AuthorizationException
 	 */
-	public function authorizeTo(Request $request, $ability)
+	public function authorizeTo(Request $request, string $ability): void
 	{
 		throw_unless($this->authorizedTo($request, $ability), AuthorizationException::class);
 	}
@@ -172,7 +177,7 @@ trait PermissionsBasedAuthTrait
 	 *
 	 * @return bool
 	 */
-	public function authorizedTo(Request $request, $ability)
+	public function authorizedTo(Request $request, string $ability): bool
 	{
 		return static::authorizable() ? static::hasPermissionsTo($request, $ability) : true;
 	}
